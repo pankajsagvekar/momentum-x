@@ -191,8 +191,10 @@ class Game {
         // Initialize player
         this.player = new Player();
         
+        // Initialize obstacle manager
+        this.obstacleManager = new ObstacleManager();
+        
         // Other systems will be initialized in later tasks
-        // this.obstacleManager = new ObstacleManager();
         // this.powerManager = new PowerManager();
         
         console.log('Game systems initialized');
@@ -273,7 +275,29 @@ class Game {
         if (this.player) {
             this.player.update(deltaTime);
         }
-        // this.obstacleManager.update(deltaTime);
+        
+        if (this.obstacleManager) {
+            this.obstacleManager.update(deltaTime, this.timeElapsed, this.difficultyLevel);
+            
+            // Check for collisions using AABB collision detection
+            const collidedObstacle = this.obstacleManager.checkCollisions(this.player);
+            if (collidedObstacle) {
+                // Add visual feedback for collision
+                this.createCollisionEffect(collidedObstacle);
+                
+                // Immediate game over on collision detection
+                this.handleGameOver();
+                return;
+            }
+            
+            // Check for obstacles passed (for scoring)
+            const obstaclesPassed = this.obstacleManager.checkObstaclesPassed(this.player.x);
+            if (obstaclesPassed > 0) {
+                this.score += obstaclesPassed * GAME_CONFIG.SCORE_PER_OBSTACLE;
+                console.log(`Player passed ${obstaclesPassed} obstacles! Score: ${Math.floor(this.score)}`);
+            }
+        }
+        
         // this.powerManager.update(deltaTime);
         
         // Update UI
@@ -343,7 +367,10 @@ class Game {
         if (this.player) {
             this.player.render(this.ctx);
         }
-        // this.obstacleManager.render(this.ctx);
+        
+        if (this.obstacleManager) {
+            this.obstacleManager.render(this.ctx);
+        }
         
         // Render particles
         renderParticles(this.ctx, this.particles);
@@ -422,7 +449,8 @@ class Game {
             `Score: ${Math.floor(this.score)}`,
             `Time: ${formatTime(this.timeElapsed / 1000)}`,
             `Difficulty: ${this.difficultyLevel}`,
-            `Particles: ${this.particles.length}`
+            `Particles: ${this.particles.length}`,
+            `Obstacles: ${this.obstacleManager ? this.obstacleManager.getObstacleCount() : 0}`
         ];
         
         debugInfo.forEach((info, index) => {
@@ -439,6 +467,41 @@ class Game {
         if (this.scoreElement) {
             this.scoreElement.textContent = `Score: ${Math.floor(this.score)}`;
         }
+    }
+    
+    /**
+     * Create visual feedback for collision events
+     * @param {Object} obstacle - The obstacle that was collided with
+     */
+    createCollisionEffect(obstacle) {
+        const playerCenter = this.player.getCenter();
+        const obstacleCenter = obstacle.getCenter();
+        
+        // Create explosion particles at collision point
+        const collisionX = (playerCenter.x + obstacleCenter.x) / 2;
+        const collisionY = (playerCenter.y + obstacleCenter.y) / 2;
+        
+        // Create intense particle explosion
+        for (let i = 0; i < 30; i++) {
+            this.particles.push(createParticle(
+                collisionX,
+                collisionY,
+                Math.random() > 0.5 ? GAME_CONFIG.COLORS.RED : GAME_CONFIG.COLORS.WHITE,
+                2000
+            ));
+        }
+        
+        // Create additional particles around player
+        for (let i = 0; i < 20; i++) {
+            this.particles.push(createParticle(
+                playerCenter.x + randomBetween(-30, 30),
+                playerCenter.y + randomBetween(-30, 30),
+                GAME_CONFIG.COLORS.MAGENTA,
+                1500
+            ));
+        }
+        
+        console.log('Collision detected! Creating visual feedback.');
     }
     
     /**
@@ -487,7 +550,11 @@ class Game {
         if (this.player) {
             this.player.reset();
         }
-        // this.obstacleManager.reset();
+        
+        if (this.obstacleManager) {
+            this.obstacleManager.reset();
+        }
+        
         // this.powerManager.reset();
         
         // Start game

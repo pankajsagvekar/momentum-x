@@ -41,12 +41,9 @@ class Player {
         // Calculate pulse effect for visual feedback
         this.pulseIntensity = Math.sin(this.animationTime * 0.005) * 0.3 + 0.7;
         
-        // Automatic left-to-right movement
-        const currentSpeed = this.speed * speedMultiplier;
-        this.x += currentSpeed * (deltaTime / 1000);
-        
-        // Keep player within canvas bounds (with some margin)
-        this.x = clamp(this.x, 50, GAME_CONFIG.CANVAS_WIDTH - this.width - 50);
+        // Player stays in position on the left side - no horizontal movement
+        // The "left-to-right movement" is simulated by obstacles moving towards the player
+        // and the background scrolling, creating the illusion of forward movement
     }
     
     /**
@@ -152,7 +149,7 @@ class Player {
      * Reset player to initial state
      */
     reset() {
-        this.x = GAME_CONFIG.PLAYER_X;
+        this.x = GAME_CONFIG.PLAYER_X; // Fixed position on left side
         this.y = GAME_CONFIG.PLAYER_Y;
         this.speed = this.baseSpeed;
         this.animationTime = 0;

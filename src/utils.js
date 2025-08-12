@@ -12,9 +12,9 @@ const GAME_CONFIG = {
     // Player settings
     PLAYER_WIDTH: 40,
     PLAYER_HEIGHT: 60,
-    PLAYER_X: 100,
+    PLAYER_X: 100, // Fixed position on left side
     PLAYER_Y: 480,
-    PLAYER_SPEED: 300,
+    PLAYER_SPEED: 300, // Not used for horizontal movement, kept for potential future use
     
     // Obstacle settings
     OBSTACLE_MIN_SPEED: 200,
