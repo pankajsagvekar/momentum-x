@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Momentum X - Cyberpunk Endless Runner</title>
+    <link rel="stylesheet" href="styles/style.css">
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="1200" height="600"></canvas>
+        <div id="gameUI">
+            <div id="score">Score: 0</div>
+            <div id="powerBars">
+                <div class="power-bar" id="freezeBar">
+                    <span class="power-label">F</span>
+                    <div class="cooldown-fill"></div>
+                </div>
+                <div class="power-bar" id="slowBar">
+                    <span class="power-label">S</span>
+                    <div class="cooldown-fill"></div>
+                </div>
+                <div class="power-bar" id="speedBar">
+                    <span class="power-label">D</span>
+                    <div class="cooldown-fill"></div>
+                </div>
+            </div>
+        </div>
+        <div id="menuScreen" class="screen">
+            <h1>MOMENTUM X</h1>
+            <p>Manipulate time to survive the cyberpunk cityscape</p>
+            <p class="controls">Press SPACE to start</p>
+            <div class="power-info">
+                <p><strong>F</strong> - Freeze Time (2s)</p>
+                <p><strong>S</strong> - Slow Time (3s)</p>
+                <p><strong>D</strong> - Speed Time (1.5s)</p>
+            </div>
+        </div>
+        <div id="gameOverScreen" class="screen hidden">
+            <h1>GAME OVER</h1>
+            <p id="finalScore">Final Score: 0</p>
+            <p class="controls">Press R to restart</p>
+        </div>
+    </div>
+
+    <!-- Game Scripts -->
+    <script src="src/utils.js"></script>
+    <script src="src/player.js"></script>
+    <script src="src/obstacles.js"></script>
+    <script src="src/powers.js"></script>
+    <script src="src/game.js"></script>
+</body>
+</html>
