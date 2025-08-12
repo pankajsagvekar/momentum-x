@@ -9,7 +9,12 @@
   - Implement utils.js with essential constants and helper functions
   - _Requirements: 8.1, 8.3_
 
-- [ ] 2. Implement core game loop and state management
+- [x] 2. Implement core game loop and state management
+
+
+
+
+
   - Create Game class with init(), start(), update(), and render() methods
   - Implement requestAnimationFrame-based game loop for 60fps performance
   - Add basic game state management (menu, playing, game over)
