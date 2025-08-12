@@ -185,11 +185,17 @@ class Game {
     }
     
     /**
-     * Initialize game systems (placeholder implementations)
+     * Initialize game systems
      */
     initializeGameSystems() {
-        // These will be properly implemented in later tasks
-        console.log('Game systems initialized (placeholder)');
+        // Initialize player
+        this.player = new Player();
+        
+        // Other systems will be initialized in later tasks
+        // this.obstacleManager = new ObstacleManager();
+        // this.powerManager = new PowerManager();
+        
+        console.log('Game systems initialized');
     }
     
     /**
@@ -263,8 +269,10 @@ class Game {
         // Update particles
         updateParticles(this.particles, deltaTime);
         
-        // Update game systems (placeholder for now)
-        // this.player.update(deltaTime);
+        // Update game systems
+        if (this.player) {
+            this.player.update(deltaTime);
+        }
         // this.obstacleManager.update(deltaTime);
         // this.powerManager.update(deltaTime);
         
@@ -331,8 +339,10 @@ class Game {
         // Render background
         this.renderBackground();
         
-        // Render game objects (placeholder for now)
-        // this.player.render(this.ctx);
+        // Render game objects
+        if (this.player) {
+            this.player.render(this.ctx);
+        }
         // this.obstacleManager.render(this.ctx);
         
         // Render particles
@@ -473,8 +483,10 @@ class Game {
         // Reset background
         this.initializeBackground();
         
-        // Reset game systems (placeholder for now)
-        // this.player.reset();
+        // Reset game systems
+        if (this.player) {
+            this.player.reset();
+        }
         // this.obstacleManager.reset();
         // this.powerManager.reset();
         
