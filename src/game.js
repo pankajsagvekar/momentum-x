@@ -194,8 +194,8 @@ class Game {
         // Initialize obstacle manager
         this.obstacleManager = new ObstacleManager();
         
-        // Other systems will be initialized in later tasks
-        // this.powerManager = new PowerManager();
+        // Initialize power manager
+        this.powerManager = new PowerManager();
         
         console.log('Game systems initialized');
     }
@@ -271,13 +271,22 @@ class Game {
         // Update particles
         updateParticles(this.particles, deltaTime);
         
-        // Update game systems
+        // Update power manager first to get current time multiplier
+        if (this.powerManager) {
+            this.powerManager.update(deltaTime);
+        }
+        
+        // Get current time multiplier for applying time effects
+        const timeMultiplier = this.powerManager ? this.powerManager.getCurrentMultiplier() : 1.0;
+        
+        // Update game systems with time effects
         if (this.player) {
             this.player.update(deltaTime);
         }
         
         if (this.obstacleManager) {
-            this.obstacleManager.update(deltaTime, this.timeElapsed, this.difficultyLevel);
+            // Apply time effects to obstacle movement
+            this.obstacleManager.update(deltaTime, this.timeElapsed, this.difficultyLevel, timeMultiplier);
             
             // Check for collisions using AABB collision detection
             const collidedObstacle = this.obstacleManager.checkCollisions(this.player);
@@ -293,12 +302,12 @@ class Game {
             // Check for obstacles passed (for scoring)
             const obstaclesPassed = this.obstacleManager.checkObstaclesPassed(this.player.x);
             if (obstaclesPassed > 0) {
-                this.score += obstaclesPassed * GAME_CONFIG.SCORE_PER_OBSTACLE;
-                console.log(`Player passed ${obstaclesPassed} obstacles! Score: ${Math.floor(this.score)}`);
+                // Apply score multiplier during speed power (double score rate)
+                const scoreMultiplier = this.powerManager && this.powerManager.getCurrentTimeState() === TIME_STATES.FAST ? 2.0 : 1.0;
+                this.score += obstaclesPassed * GAME_CONFIG.SCORE_PER_OBSTACLE * scoreMultiplier;
+                console.log(`Player passed ${obstaclesPassed} obstacles! Score: ${Math.floor(this.score)} (${scoreMultiplier}x multiplier)`);
             }
         }
-        
-        // this.powerManager.update(deltaTime);
         
         // Update UI
         this.updateUI();
@@ -331,8 +340,11 @@ class Game {
      * @param {number} deltaTime - Time since last update
      */
     updateScore(deltaTime) {
-        // Add time-based score
-        const timeScore = (deltaTime / 1000) * GAME_CONFIG.SCORE_PER_SECOND;
+        // Apply score multiplier during speed power (double score rate)
+        const scoreMultiplier = this.powerManager && this.powerManager.getCurrentTimeState() === TIME_STATES.FAST ? 2.0 : 1.0;
+        
+        // Add time-based score with multiplier
+        const timeScore = (deltaTime / 1000) * GAME_CONFIG.SCORE_PER_SECOND * scoreMultiplier;
         this.score += timeScore;
     }
     
@@ -343,8 +355,12 @@ class Game {
     updateBackground(deltaTime) {
         const baseSpeed = 100; // Base scrolling speed
         
+        // Get current time multiplier for background scrolling
+        const timeMultiplier = this.powerManager ? this.powerManager.getCurrentMultiplier() : 1.0;
+        
         this.backgroundLayers.forEach(layer => {
-            layer.x -= baseSpeed * layer.speed * (deltaTime / 1000);
+            // Apply time effects to background scrolling speed
+            layer.x -= baseSpeed * layer.speed * timeMultiplier * (deltaTime / 1000);
             
             // Reset position when layer has scrolled completely
             if (layer.x <= -this.canvas.width) {
@@ -555,7 +571,9 @@ class Game {
             this.obstacleManager.reset();
         }
         
-        // this.powerManager.reset();
+        if (this.powerManager) {
+            this.powerManager.reset();
+        }
         
         // Start game
         this.startGame();

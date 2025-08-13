@@ -258,7 +258,9 @@ class Obstacle {
      * @returns {boolean} - True if player has passed
      */
     hasPlayerPassed(playerX) {
-        // Since player is stationary on the left, obstacle has passed when it moves past player
+        // Player has "passed" an obstacle when the obstacle has moved past the player
+        // Since obstacles move from right to left and player is stationary on the left,
+        // we check if the obstacle's right edge has passed the player's position
         return !this.hasBeenPassed && this.x + this.width < playerX;
     }
     

@@ -57,21 +57,36 @@
   - Add visual feedback for collision events
   - _Requirements: 1.3, 8.2_
 
-- [ ] 6. Create time powers system with cooldown management
+- [x] 6. Create time powers system with cooldown management
+
+
+
+
+
   - Implement PowerManager class with three power types (freeze, slow, speed)
   - Add cooldown timers and availability checking for each power
   - Create keyboard input handlers for F, S, D keys
   - Implement power activation logic with proper state management
   - _Requirements: 2.1, 2.2, 2.3, 2.4_
 
-- [ ] 7. Integrate time effects with game systems
+- [x] 7. Integrate time effects with game systems
+
+
+
+
+
   - Apply freeze effect to stop all obstacle movement for 2 seconds
   - Implement slow effect to reduce game speed by 50% for 3 seconds
   - Add speed effect to double game speed for 1.5 seconds
   - Ensure time effects properly modify obstacle behavior and background scrolling
   - _Requirements: 2.5, 3.2, 3.3, 3.4_
 
-- [ ] 8. Implement scoring system with multiple reward mechanisms
+- [x] 8. Implement scoring system with multiple reward mechanisms
+
+
+
+
+
   - Add time-based scoring (+1 point per second)
   - Implement obstacle passing detection and scoring (+5 points per obstacle)
   - Create score doubling during speed power activation
