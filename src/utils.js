@@ -1,27 +1,40 @@
 /**
  * Momentum X - Utility Functions and Constants
- * Shared functionality for the cyberpunk endless runner game
+ * Shared functionality for the cyberpunk endless runner game with Three.js 3D support
  */
+
+import * as THREE from 'three';
 
 // Game Constants
 const GAME_CONFIG = {
-    // Canvas dimensions
-    CANVAS_WIDTH: 1200,
-    CANVAS_HEIGHT: 600,
-    
-    // Player settings
-    PLAYER_WIDTH: 40,
-    PLAYER_HEIGHT: 60,
-    PLAYER_X: 100, // Fixed position on left side
-    PLAYER_Y: 480,
-    PLAYER_SPEED: 300, // Not used for horizontal movement, kept for potential future use
-    
-    // Obstacle settings
-    OBSTACLE_MIN_SPEED: 200,
-    OBSTACLE_MAX_SPEED: 500,
+    // 3D Scene dimensions
+    SCENE_WIDTH: 1200,
+    SCENE_HEIGHT: 600,
+
+    // 3D Lane system
+    LANE_COUNT: 3,
+    LANE_WIDTH: 4,
+    LANE_POSITIONS: [-4, 0, 4], // Left, Center, Right lane X positions
+    LANE_TRANSITION_SPEED: 0.3, // Seconds for lane transitions
+
+    // 3D Player settings
+    PLAYER_SIZE: 1,
+    PLAYER_HEIGHT: 2,
+    PLAYER_START_Z: -5, // Starting Z position (behind camera)
+    PLAYER_FORWARD_SPEED: 20, // Units per second forward movement
+    PLAYER_JUMP_HEIGHT: 3,
+    PLAYER_JUMP_DURATION: 0.8, // Seconds
+    PLAYER_SLIDE_DURATION: 0.6, // Seconds
+
+    // 3D Obstacle settings
+    OBSTACLE_SPAWN_DISTANCE: 50, // Distance ahead to spawn obstacles
+    OBSTACLE_DESPAWN_DISTANCE: -10, // Distance behind to remove obstacles
     OBSTACLE_SPAWN_RATE: 1500, // milliseconds
     OBSTACLE_MIN_GAP: 500, // minimum time between spawns
-    
+    OBSTACLE_HEIGHT: 2,
+    OBSTACLE_WIDTH: 1.5,
+    OBSTACLE_DEPTH: 1.5,
+
     // Time power settings
     FREEZE_DURATION: 2000,
     FREEZE_COOLDOWN: 5000,
@@ -29,21 +42,30 @@ const GAME_CONFIG = {
     SLOW_COOLDOWN: 4000,
     SPEED_DURATION: 1500,
     SPEED_COOLDOWN: 6000,
-    
+
     // Scoring
     SCORE_PER_SECOND: 1,
     SCORE_PER_OBSTACLE: 5,
-    
+
     // Difficulty scaling
     DIFFICULTY_INTERVAL: 20000, // 20 seconds
-    DIFFICULTY_SPEED_INCREASE: 0.2,
-    DIFFICULTY_SPAWN_DECREASE: 150,
-    
-    // Background parallax speeds
-    PARALLAX_SKYLINE: 0.2,
-    PARALLAX_BUILDINGS: 0.5,
-    PARALLAX_NEON: 1.0,
-    
+    DIFFICULTY_SPEED_INCREASE: 0.2, // 20% speed increase per level
+    DIFFICULTY_SPAWN_DECREASE: 150, // Decrease spawn interval by 150ms per level
+    DIFFICULTY_MIN_SPAWN_INTERVAL: 500, // Minimum 0.5 seconds between spawns
+
+    // 3D Camera settings
+    CAMERA_FOV: 75,
+    CAMERA_NEAR: 0.1,
+    CAMERA_FAR: 1000,
+    CAMERA_POSITION: { x: 0, y: 3, z: 8 },
+    CAMERA_FOLLOW_SPEED: 5, // Speed of camera following player lane changes
+
+    // 3D Environment settings
+    ENVIRONMENT_SCROLL_SPEED: 20, // Units per second
+    BUILDING_COUNT: 20,
+    BUILDING_SPACING: 10,
+    NEON_LIGHT_COUNT: 15,
+
     // Colors (cyberpunk theme)
     COLORS: {
         CYAN: '#00ffff',
@@ -91,9 +113,9 @@ const OBSTACLE_TYPES = {
  */
 function checkCollision(rect1, rect2) {
     return rect1.x < rect2.x + rect2.width &&
-           rect1.x + rect1.width > rect2.x &&
-           rect1.y < rect2.y + rect2.height &&
-           rect1.y + rect1.height > rect2.y;
+        rect1.x + rect1.width > rect2.x &&
+        rect1.y < rect2.y + rect2.height &&
+        rect1.y + rect1.height > rect2.y;
 }
 
 /**
@@ -187,14 +209,14 @@ function createParticle(x, y, color, life = 1000) {
 function updateParticles(particles, deltaTime) {
     for (let i = particles.length - 1; i >= 0; i--) {
         const particle = particles[i];
-        
+
         // Update position
         particle.x += particle.vx * (deltaTime / 1000);
         particle.y += particle.vy * (deltaTime / 1000);
-        
+
         // Update life
         particle.life -= deltaTime;
-        
+
         // Remove dead particles
         if (particle.life <= 0) {
             particles.splice(i, 1);
@@ -221,16 +243,142 @@ function renderParticles(ctx, particles) {
 }
 
 /**
+ * 3D Utility Functions for Three.js
+ */
+
+/**
+ * Create a basic 3D box geometry with cyberpunk materials
+ * @param {number} width - Box width
+ * @param {number} height - Box height  
+ * @param {number} depth - Box depth
+ * @param {number} color - Hex color
+ * @returns {THREE.Mesh} - Three.js mesh object
+ */
+function create3DBox(width, height, depth, color = 0x00ffff) {
+    const geometry = new THREE.BoxGeometry(width, height, depth);
+    const material = new THREE.MeshPhongMaterial({
+        color: color,
+        emissive: color,
+        emissiveIntensity: 0.2,
+        shininess: 100
+    });
+    return new THREE.Mesh(geometry, material);
+}
+
+/**
+ * Create cyberpunk-styled neon material
+ * @param {number} color - Hex color
+ * @param {number} intensity - Emissive intensity (0-1)
+ * @returns {THREE.MeshPhongMaterial} - Neon material
+ */
+function createNeonMaterial(color = 0x00ffff, intensity = 0.5) {
+    return new THREE.MeshPhongMaterial({
+        color: color,
+        emissive: color,
+        emissiveIntensity: intensity,
+        shininess: 100,
+        transparent: true,
+        opacity: 0.8
+    });
+}
+
+/**
+ * Get lane position in 3D space
+ * @param {number} laneIndex - Lane index (0, 1, 2)
+ * @returns {number} - X position for the lane
+ */
+function getLanePosition(laneIndex) {
+    return GAME_CONFIG.LANE_POSITIONS[clamp(laneIndex, 0, GAME_CONFIG.LANE_COUNT - 1)];
+}
+
+/**
+ * Check 3D collision between two objects using bounding boxes
+ * @param {THREE.Object3D} obj1 - First 3D object
+ * @param {THREE.Object3D} obj2 - Second 3D object
+ * @param {Object} size1 - Size of first object {width, height, depth}
+ * @param {Object} size2 - Size of second object {width, height, depth}
+ * @returns {boolean} - True if collision detected
+ */
+function check3DCollision(obj1, obj2, size1, size2) {
+    const pos1 = obj1.position;
+    const pos2 = obj2.position;
+
+    return Math.abs(pos1.x - pos2.x) < (size1.width + size2.width) / 2 &&
+        Math.abs(pos1.y - pos2.y) < (size1.height + size2.height) / 2 &&
+        Math.abs(pos1.z - pos2.z) < (size1.depth + size2.depth) / 2;
+}
+
+/**
+ * Smooth interpolation for 3D positions
+ * @param {THREE.Vector3} current - Current position
+ * @param {THREE.Vector3} target - Target position
+ * @param {number} speed - Interpolation speed
+ * @param {number} deltaTime - Time since last update
+ */
+function smoothMove3D(current, target, speed, deltaTime) {
+    const factor = Math.min(1, speed * deltaTime);
+    current.lerp(target, factor);
+}
+
+/**
+ * Create basic cyberpunk lighting setup
+ * @param {THREE.Scene} scene - Three.js scene
+ */
+function setupCyberpunkLighting(scene) {
+    // Ambient light for overall illumination
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.3);
+    scene.add(ambientLight);
+
+    // Main directional light (moonlight effect)
+    const directionalLight = new THREE.DirectionalLight(0x8080ff, 0.8);
+    directionalLight.position.set(10, 20, 10);
+    directionalLight.castShadow = true;
+    scene.add(directionalLight);
+
+    // Cyan accent light from the left
+    const leftLight = new THREE.PointLight(0x00ffff, 1, 50);
+    leftLight.position.set(-20, 10, 0);
+    scene.add(leftLight);
+
+    // Magenta accent light from the right
+    const rightLight = new THREE.PointLight(0xff0080, 1, 50);
+    rightLight.position.set(20, 10, 0);
+    scene.add(rightLight);
+
+    return { ambientLight, directionalLight, leftLight, rightLight };
+}
+
+/**
+ * Create a simple 3D ground plane
+ * @param {number} width - Ground width
+ * @param {number} depth - Ground depth
+ * @returns {THREE.Mesh} - Ground mesh
+ */
+function createGround(width = 100, depth = 200) {
+    const geometry = new THREE.PlaneGeometry(width, depth);
+    const material = new THREE.MeshPhongMaterial({
+        color: 0x111111,
+        transparent: true,
+        opacity: 0.8
+    });
+    const ground = new THREE.Mesh(geometry, material);
+    ground.rotation.x = -Math.PI / 2; // Rotate to be horizontal
+    ground.position.y = -1;
+    return ground;
+}
+
+/**
  * Performance monitoring utility
  */
 class PerformanceMonitor {
     constructor() {
         this.frameCount = 0;
         this.lastTime = 0;
+        this.lastFpsUpdate = 0;
         this.fps = 0;
         this.frameTime = 0;
     }
-    
+
     /**
      * Update performance metrics
      * @param {number} currentTime - Current timestamp
@@ -238,17 +386,17 @@ class PerformanceMonitor {
     update(currentTime) {
         this.frameCount++;
         this.frameTime = currentTime - this.lastTime;
-        
+
         // Calculate FPS every second
         if (currentTime - this.lastFpsUpdate > 1000) {
             this.fps = Math.round(this.frameCount * 1000 / (currentTime - this.lastFpsUpdate));
             this.frameCount = 0;
             this.lastFpsUpdate = currentTime;
         }
-        
+
         this.lastTime = currentTime;
     }
-    
+
     /**
      * Get current FPS
      * @returns {number} - Frames per second
@@ -256,7 +404,7 @@ class PerformanceMonitor {
     getFPS() {
         return this.fps;
     }
-    
+
     /**
      * Get frame time in milliseconds
      * @returns {number} - Frame time
@@ -266,23 +414,28 @@ class PerformanceMonitor {
     }
 }
 
-// Export for use in other modules (if using modules)
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        GAME_CONFIG,
-        GAME_STATES,
-        TIME_STATES,
-        OBSTACLE_TYPES,
-        checkCollision,
-        randomBetween,
-        randomIntBetween,
-        clamp,
-        lerp,
-        msToSeconds,
-        formatTime,
-        createParticle,
-        updateParticles,
-        renderParticles,
-        PerformanceMonitor
-    };
-}
+// Export for ES modules
+export {
+    GAME_CONFIG,
+    GAME_STATES,
+    TIME_STATES,
+    OBSTACLE_TYPES,
+    checkCollision,
+    randomBetween,
+    randomIntBetween,
+    clamp,
+    lerp,
+    msToSeconds,
+    formatTime,
+    createParticle,
+    updateParticles,
+    renderParticles,
+    PerformanceMonitor,
+    create3DBox,
+    createNeonMaterial,
+    getLanePosition,
+    check3DCollision,
+    smoothMove3D,
+    setupCyberpunkLighting,
+    createGround
+};

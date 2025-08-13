@@ -8,7 +8,7 @@
 </head>
 <body>
     <div id="gameContainer">
-        <canvas id="gameCanvas" width="1200" height="600"></canvas>
+        <div id="gameCanvas"></div>
         <div id="gameUI">
             <div id="score">Score: 0</div>
             <div id="powerBars">
@@ -43,11 +43,21 @@
         </div>
     </div>
 
-    <!-- Game Scripts -->
-    <script src="src/utils.js"></script>
-    <script src="src/player.js"></script>
-    <script src="src/obstacles.js"></script>
-    <script src="src/powers.js"></script>
-    <script src="src/game.js"></script>
+    <!-- Import Maps for ES Modules -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.158.0/build/three.module.js"
+            }
+        }
+    </script>
+    
+    <!-- Game Scripts as ES Modules -->
+    <script type="module" src="src/utils.js"></script>
+    <script type="module" src="src/scene.js"></script>
+    <script type="module" src="src/player.js"></script>
+    <script type="module" src="src/obstacles.js"></script>
+    <script type="module" src="src/powers.js"></script>
+    <script type="module" src="src/game.js"></script>
 </body>
 </html>
